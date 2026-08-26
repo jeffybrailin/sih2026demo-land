@@ -1,140 +1,145 @@
 import { create } from 'zustand';
-import axios from 'axios';
 import * as turf from '@turf/turf';
+import { fetchAllCitiesWeather, LiveWeatherData } from '../services/weatherService';
+import { runAllInference, MLInferenceResult } from '../services/mlInference';
 
-export interface RiskFeature {
-  type: 'Feature';
-  properties: {
-    sector_id: string;
-    name: string;
-    hazard_score: number;
-    severity: 'GREEN' | 'YELLOW' | 'ORANGE' | 'RED';
-    color: string;
-    slope_deg: number;
-    fos: number;
-    recommended_action: string;
-    rainfall_mm?: number;
-    historical_incidents?: number;
-  };
-  geometry: {
-    type: 'Polygon';
-    coordinates: number[][][];
-  };
+const POLYGON_OFFSET = 0.045;
+
+function buildPolygon(lat: number, lon: number) {
+  return [[
+    [lon - POLYGON_OFFSET, lat - POLYGON_OFFSET],
+    [lon + POLYGON_OFFSET, lat - POLYGON_OFFSET],
+    [lon + POLYGON_OFFSET, lat + POLYGON_OFFSET],
+    [lon - POLYGON_OFFSET, lat + POLYGON_OFFSET],
+    [lon - POLYGON_OFFSET, lat - POLYGON_OFFSET],
+  ]];
 }
 
-export interface GeoJSONCollection {
-  type: 'FeatureCollection';
-  features: RiskFeature[];
-}
-
-interface UserLocation {
-  lat: number;
-  lng: number;
-}
-
-interface AppState {
-  forecastRain24h: number;
-  antecedentRain7d: number;
-  riskZones: GeoJSONCollection | null;
-  alerts: any[];
-  userLocation: UserLocation | null;
+export interface AppState {
+  // Live weather from Open-Meteo (real API)
+  weatherData: LiveWeatherData[];
+  // ML inference results driven by live weather
+  inferenceResults: MLInferenceResult[];
+  // GeoJSON derived from inference (drives map polygon colors)
+  riskGeoJSON: GeoJSON.FeatureCollection | null;
+  // Active RED/ORANGE alerts
+  activeAlerts: MLInferenceResult[];
+  // User monitoring location
+  userLocation: { lat: number; lng: number } | null;
+  // Turf.js intersection result
   isAlertActive: boolean;
-  alertMessage: string;
-  selectedSector: RiskFeature | null;
+  intersectedZone: string;
+  // Weather fetch state
+  weatherStatus: 'idle' | 'fetching' | 'success' | 'error';
+  lastWeatherFetch: string;
+  // Language
+  language: 'en' | 'hi';
 
-  setForecastRain24h: (val: number) => void;
-  setAntecedentRain7d: (val: number) => void;
-  fetchData: () => Promise<void>;
-  setUserLocation: (loc: UserLocation) => void;
-  checkIntersection: () => void;
+  // Actions
+  fetchLiveWeather: () => Promise<void>;
+  setUserLocation: (loc: { lat: number; lng: number }) => void;
   dismissAlert: () => void;
-  setSelectedSector: (f: RiskFeature | null) => void;
+  setLanguage: (lang: 'en' | 'hi') => void;
 }
 
 export const useStore = create<AppState>((set, get) => ({
-  forecastRain24h: 0,
-  antecedentRain7d: 0,
-  riskZones: null,
-  alerts: [],
+  weatherData: [],
+  inferenceResults: [],
+  riskGeoJSON: null,
+  activeAlerts: [],
   userLocation: null,
   isAlertActive: false,
-  alertMessage: '',
-  selectedSector: null,
+  intersectedZone: '',
+  weatherStatus: 'idle',
+  lastWeatherFetch: '',
+  language: 'en',
 
-  setForecastRain24h: (val) => {
-    set({ forecastRain24h: val });
-    get().fetchData();
-  },
-  setAntecedentRain7d: (val) => {
-    set({ antecedentRain7d: val });
-    get().fetchData();
-  },
-
-  fetchData: async () => {
+  fetchLiveWeather: async () => {
+    set({ weatherStatus: 'fetching' });
     try {
-      const { forecastRain24h, antecedentRain7d } = get();
-      const params = { forecast_rain_24h: forecastRain24h, antecedent_rain_7d: antecedentRain7d };
+      // 1. Fetch LIVE Open-Meteo data for all 8 NER cities
+      const weatherData = await fetchAllCitiesWeather();
 
-      const [zonesRes, alertsRes] = await Promise.all([
-        axios.get('http://127.0.0.1:8000/api/v1/risk-zones', { params }),
-        axios.get('http://127.0.0.1:8000/api/v1/alerts', { params })
-      ]);
+      // 2. Run ML inference on live data
+      const inferenceResults = runAllInference(weatherData);
 
-      // Enrich features with mock contextual data
-      const enriched: GeoJSONCollection = {
-        ...zonesRes.data,
-        features: zonesRes.data.features.map((f: RiskFeature) => ({
-          ...f,
-          properties: {
-            ...f.properties,
-            rainfall_mm: Math.round(antecedentRain7d + forecastRain24h),
-            historical_incidents: Math.floor(Math.random() * 12) + 1,
-          }
-        }))
-      };
+      // 3. Build GeoJSON FeatureCollection with weather-driven colors
+      const features: GeoJSON.Feature[] = inferenceResults.map((inf, i) => ({
+        type: 'Feature',
+        properties: {
+          sector_id: inf.sector_id,
+          name: inf.name,
+          severity: inf.severity,
+          color: inf.color,
+          risk_score: inf.risk_score,
+          fos: inf.fos,
+          recommended_action: inf.recommended_action,
+          triggered_rules: inf.triggered_rules.join(' | '),
+          rainfall_24h: inf.rainfall_24h,
+          soil_moisture: inf.soil_moisture,
+          slope_deg: inf.slope_deg,
+          historical_incidents: inf.historical_incidents,
+          current_precipitation_mm: weatherData[i]?.current_precipitation_mm ?? 0,
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: buildPolygon(weatherData[i]?.lat ?? 0, weatherData[i]?.lon ?? 0),
+        },
+      }));
 
-      set({ riskZones: enriched, alerts: alertsRes.data.alerts });
+      const riskGeoJSON: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features };
+      const activeAlerts = inferenceResults.filter(r => r.severity === 'RED' || r.severity === 'ORANGE');
 
-      // Re-check intersection after data update
-      get().checkIntersection();
-    } catch (error) {
-      console.error('Error fetching data from backend:', error);
+      set({
+        weatherData,
+        inferenceResults,
+        riskGeoJSON,
+        activeAlerts,
+        weatherStatus: 'success',
+        lastWeatherFetch: new Date().toLocaleTimeString('en-IN', { hour12: false }),
+      });
+
+      // 4. Re-check Turf intersection with new data
+      get().setUserLocation(get().userLocation!);
+
+    } catch (err) {
+      console.error('Live weather fetch failed:', err);
+      set({ weatherStatus: 'error' });
     }
   },
 
   setUserLocation: (loc) => {
+    if (!loc) return;
     set({ userLocation: loc });
-    get().checkIntersection();
-  },
 
-  checkIntersection: () => {
-    const { userLocation, riskZones } = get();
-    if (!userLocation || !riskZones) return;
+    const { riskGeoJSON } = get();
+    if (!riskGeoJSON) return;
 
-    const point = turf.point([userLocation.lng, userLocation.lat]);
+    const point = turf.point([loc.lng, loc.lat]);
     let triggered = false;
-    let message = '';
+    let zoneName = '';
 
-    for (const feature of riskZones.features) {
-      if (feature.properties.severity === 'RED' || feature.properties.severity === 'ORANGE') {
+    for (const feature of riskGeoJSON.features) {
+      const props = feature.properties as any;
+      if (props.severity === 'RED' || props.severity === 'ORANGE') {
         try {
-          const poly = turf.polygon(feature.geometry.coordinates);
+          const poly = turf.polygon((feature.geometry as any).coordinates);
           if (turf.booleanPointInPolygon(point, poly)) {
             triggered = true;
-            message = `⚠️ WARNING: High Landslide Probability Detected in ${feature.properties.name} Zone.`;
+            zoneName = props.name;
             break;
           }
         } catch (_) { /* skip malformed */ }
       }
     }
 
-    set({ isAlertActive: triggered, alertMessage: message });
+    set({ isAlertActive: triggered, intersectedZone: zoneName });
 
     if (triggered && 'vibrate' in navigator) {
-      navigator.vibrate([300, 100, 300]);
+      navigator.vibrate([400, 100, 400, 100, 400]);
     }
   },
 
   dismissAlert: () => set({ isAlertActive: false }),
-  setSelectedSector: (f) => set({ selectedSector: f }),
+  setLanguage: (lang) => set({ language: lang }),
 }));

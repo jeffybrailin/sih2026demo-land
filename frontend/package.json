@@ -1,7 +1,7 @@
 {
-  "name": "landslide-frontend",
+  "name": "landslide-lews",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,10 +12,12 @@
     "@turf/turf": "^6.5.0",
     "axios": "^1.6.0",
     "clsx": "^2.1.0",
+    "i18next": "^23.16.8",
     "lucide-react": "^0.300.0",
     "maplibre-gl": "^4.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-i18next": "^14.1.3",
     "tailwind-merge": "^2.2.0",
     "zustand": "^4.5.0"
   },
