@@ -61,44 +61,41 @@ function App() {
         <main className="flex-1 relative overflow-hidden">
           <MapComponent />
 
-          {/* ── Floating status cluster (top-left over map) ── */}
-          <div className="absolute top-3 left-3 z-20 flex flex-wrap gap-1.5 pointer-events-none">
-            {/* Live dot */}
-            <div className="pointer-events-auto glass-card rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-[10px] font-semibold text-green-400">Live</span>
-            </div>
+          {/* ── Floating status cluster (top-centre over map) ── */}
+          <div className="absolute top-3 left-0 right-0 z-20 flex justify-center pointer-events-none">
+            <div className="flex flex-wrap items-center gap-1.5 pointer-events-auto">
 
-            {/* API status */}
-            <div className={`pointer-events-auto glass-card rounded-lg px-2.5 py-1.5 hidden sm:flex ${
-              weatherStatus === 'error' ? 'border-red-900/50' : ''
-            }`}>
-              <div className="text-[8px] text-slate-600 uppercase tracking-wider leading-none mb-0.5">
-                Open-Meteo
-              </div>
-              <div className={`text-[10px] font-bold ${
-                weatherStatus === 'success' ? 'text-green-400' :
-                weatherStatus === 'error'   ? 'text-red-400'   : 'text-blue-400'
+              {/* API status */}
+              <div className={`glass-card rounded-lg px-2.5 py-1.5 hidden sm:flex flex-col items-center ${
+                weatherStatus === 'error' ? 'border-red-900/50' : ''
               }`}>
-                {weatherStatus === 'fetching' ? 'Syncing…' :
-                 weatherStatus === 'error'    ? 'Error'    :
-                 `${inferenceResults.length} Sectors`}
+                <div className="text-[8px] text-slate-600 uppercase tracking-wider leading-none mb-0.5">
+                  Open-Meteo
+                </div>
+                <div className={`text-[10px] font-bold ${
+                  weatherStatus === 'success' ? 'text-green-400' :
+                  weatherStatus === 'error'   ? 'text-red-400'   : 'text-blue-400'
+                }`}>
+                  {weatherStatus === 'fetching' ? 'Syncing…' :
+                   weatherStatus === 'error'    ? 'Error'    :
+                   `${inferenceResults.length} Sectors`}
+                </div>
               </div>
-            </div>
 
-            {/* Critical counter */}
-            {criticalCount > 0 && (
-              <div className="pointer-events-auto glass-card rounded-lg px-2.5 py-1.5" style={{ borderColor: '#DC2626', borderWidth: 1 }}>
-                <div className="text-[8px] text-red-500 uppercase tracking-wider leading-none mb-0.5">Critical</div>
-                <div className="text-[11px] font-bold text-red-400">{criticalCount}</div>
-              </div>
-            )}
-            {warningCount > 0 && (
-              <div className="pointer-events-auto glass-card rounded-lg px-2.5 py-1.5" style={{ borderColor: '#EA580C', borderWidth: 1 }}>
-                <div className="text-[8px] text-orange-500 uppercase tracking-wider leading-none mb-0.5">Warning</div>
-                <div className="text-[11px] font-bold text-orange-400">{warningCount}</div>
-              </div>
-            )}
+              {/* Critical counter */}
+              {criticalCount > 0 && (
+                <div className="glass-card rounded-lg px-2.5 py-1.5 flex flex-col items-center" style={{ borderColor: '#DC2626', borderWidth: 1 }}>
+                  <div className="text-[8px] text-red-500 uppercase tracking-wider leading-none mb-0.5">Critical</div>
+                  <div className="text-[11px] font-bold text-red-400">{criticalCount}</div>
+                </div>
+              )}
+              {warningCount > 0 && (
+                <div className="glass-card rounded-lg px-2.5 py-1.5 flex flex-col items-center" style={{ borderColor: '#EA580C', borderWidth: 1 }}>
+                  <div className="text-[8px] text-orange-500 uppercase tracking-wider leading-none mb-0.5">Warning</div>
+                  <div className="text-[11px] font-bold text-orange-400">{warningCount}</div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ── Top-right controls (over map) ── */}

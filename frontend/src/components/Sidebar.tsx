@@ -18,9 +18,9 @@ export const Sidebar: React.FC = () => {
   const handleSimulateSMS = () => {
     setSmsSent(true);
     alert(
-      `📱 SMS BROADCAST TRIGGERED\n\n` +
-      `🇬🇧 ${t('critical_sms')}\n\n` +
-      `🇮🇳 ${t('critical_sms_hi')}\n\n` +
+      `SMS BROADCAST TRIGGERED\n\n` +
+      `EN: ${t('critical_sms')}\n\n` +
+      `HI: ${t('critical_sms_hi')}\n\n` +
       `[Via Twilio/Fast2SMS → Registered phones in affected geo-fence]`
     );
     setTimeout(() => setSmsSent(false), 4000);
@@ -165,7 +165,7 @@ export const Sidebar: React.FC = () => {
             </div>
             {isAlertActive && (
               <div className="text-red-400 font-bold text-[10px] mt-1.5 animate-pulse">
-                ⚠ {t('intersection_active')}
+                {t('intersection_active')}
               </div>
             )}
           </div>
@@ -187,7 +187,7 @@ export const Sidebar: React.FC = () => {
 
           {activeAlerts.length === 0 ? (
             <div className="glass-card rounded-xl py-6 text-center">
-              <div className="text-3xl mb-2">🟢</div>
+              <div className="w-3 h-3 rounded-full bg-green-400 mx-auto mb-2" />
               <div className="text-xs font-semibold text-green-400">All Zones Nominal</div>
               <div className="text-[10px] text-slate-500 mt-1">{t('no_alerts')}</div>
             </div>
@@ -236,7 +236,7 @@ export const Sidebar: React.FC = () => {
           style={!smsSent ? { background: 'linear-gradient(135deg, #1E3A8A, #172e70)' } : {}}
           aria-label={smsSent ? 'SMS broadcast sent' : 'Simulate SMS broadcast to emergency contacts'}
         >
-          {smsSent ? `✓ ${t('sms_sent')}` : `📡 ${t('sms_broadcast')}`}
+          {smsSent ? `✓ ${t('sms_sent')}` : t('sms_broadcast')}
         </button>
         <div className="flex items-center justify-center gap-1.5 text-[9px] text-slate-700">
           <BarChart2 size={8} />

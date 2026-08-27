@@ -3,10 +3,10 @@ import { AlertTriangle, Phone, Radio, BarChart2, Clock } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
 const EMERGENCY_CONTACTS = [
-  { name: 'NDRF Control Room',      number: '011-24363260', icon: '🚨', color: '#DC2626' },
-  { name: 'SDRF Meghalaya',         number: '0364-2503010', icon: '🪖', color: '#1E3A8A' },
-  { name: 'IMD Guwahati',           number: '0361-2637537', icon: '🌧️', color: '#0369A1' },
-  { name: 'State Emergency (NE)',   number: '1070',         icon: '📡', color: '#D97706' },
+  { name: 'NDRF Control Room',      number: '011-24363260', color: '#DC2626' },
+  { name: 'SDRF Meghalaya',         number: '0364-2503010', color: '#1E3A8A' },
+  { name: 'IMD Guwahati',           number: '0361-2637537', color: '#0369A1' },
+  { name: 'State Emergency (NE)',   number: '1070',         color: '#D97706' },
 ];
 
 export const RightPanel: React.FC = () => {
@@ -44,7 +44,7 @@ export const RightPanel: React.FC = () => {
         <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
           {activeAlerts.length === 0 ? (
             <div className="text-center py-5">
-              <div className="text-xl mb-1">🟢</div>
+              <div className="w-3 h-3 rounded-full bg-green-400 mx-auto mb-1" />
               <div className="text-xs text-slate-500">All zones nominal</div>
             </div>
           ) : (
@@ -119,7 +119,10 @@ export const RightPanel: React.FC = () => {
         <div className="space-y-1.5">
           {EMERGENCY_CONTACTS.map(c => (
             <div key={c.name} className="glass-card rounded-xl px-3 py-2 flex items-center gap-2.5">
-              <span className="text-base flex-shrink-0">{c.icon}</span>
+              <div
+                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                style={{ background: c.color }}
+              />
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-semibold text-slate-300 truncate">{c.name}</div>
                 <div className="font-mono text-[11px] font-bold" style={{ color: c.color }}>

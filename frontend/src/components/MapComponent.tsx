@@ -163,7 +163,7 @@ export const MapComponent: React.FC = () => {
           .setHTML(`
             <div style="font-family:'Inter',sans-serif">
               <div style="color:#fbbf24;font-weight:700;font-size:13px;margin-bottom:8px;display:flex;align-items:center;gap:6px">
-                <span>📍</span> Historical Landslide Event
+                Historical Landslide Event
               </div>
               <div style="display:grid;gap:4px">
                 <div style="display:flex;justify-content:space-between;font-size:11px">
@@ -212,7 +212,7 @@ export const MapComponent: React.FC = () => {
               <div style="height:1px;background:linear-gradient(90deg,${sc}80,transparent);margin-bottom:10px"></div>
               <div style="display:grid;gap:5px;margin-bottom:10px">
                 <div style="display:flex;justify-content:space-between;font-size:11px">
-                  <span style="color:#94a3b8;display:flex;align-items:center;gap:4px">🌧 Live Rainfall</span>
+                  <span style="color:#94a3b8;display:flex;align-items:center;gap:4px">Live Rainfall</span>
                   <strong style="color:#93c5fd;font-family:'JetBrains Mono',monospace">${Number(p.current_precipitation_mm ?? 0).toFixed(1)} mm/hr</strong>
                 </div>
                 <div style="display:flex;justify-content:space-between;font-size:11px">
@@ -220,7 +220,7 @@ export const MapComponent: React.FC = () => {
                   <strong style="color:#93c5fd;font-family:'JetBrains Mono',monospace">${Number(p.rainfall_24h ?? 0).toFixed(1)} mm</strong>
                 </div>
                 <div style="display:flex;justify-content:space-between;font-size:11px">
-                  <span style="color:#94a3b8;display:flex;align-items:center;gap:4px">💧 Soil Moisture</span>
+                  <span style="color:#94a3b8;display:flex;align-items:center;gap:4px">Soil Moisture</span>
                   <strong style="color:#86efac;font-family:'JetBrains Mono',monospace">${(Number(p.soil_moisture ?? 0) * 100).toFixed(1)}%</strong>
                 </div>
                 <div style="display:flex;justify-content:space-between;font-size:11px">
@@ -232,7 +232,7 @@ export const MapComponent: React.FC = () => {
                   <strong style="color:#e2e8f0;font-family:'JetBrains Mono',monospace">${Number(p.risk_score ?? 0).toFixed(3)}</strong>
                 </div>
                 <div style="display:flex;justify-content:space-between;font-size:11px">
-                  <span style="color:#94a3b8">🛣 Nearest Highway</span>
+                  <span style="color:#94a3b8">Nearest Highway</span>
                   <strong style="color:#fbbf24;font-size:10px">${highway}</strong>
                 </div>
               </div>

@@ -84,10 +84,6 @@ export const GovHeader: React.FC = () => {
              'Open-Meteo Live'}
           </span>
         </div>
-        {/* Centre title on large screens */}
-        <span className="hidden xl:block text-[11px] text-slate-500 font-medium">
-          Northeast India Terrain Risk Monitor · Powered by ML Inference + Live Weather
-        </span>
       </div>
 
       {/* ── Right: Clock + Controls ── */}

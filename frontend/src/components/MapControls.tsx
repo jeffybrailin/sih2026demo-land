@@ -29,12 +29,22 @@ export const MapControls: React.FC<Props> = ({ mapRef, is3D, onToggle3D }) => {
     onToggle3D();
   }, [mapRef, is3D, onToggle3D]);
 
+  const pan = useCallback((dx: number, dy: number) => {
+    mapRef.current?.panBy([dx, dy], { duration: 300 });
+  }, [mapRef]);
+
   const bearing = mapRef.current?.getBearing() ?? 0;
 
   const btnClass = `
     glass-card w-10 h-10 flex items-center justify-center rounded-xl
     hover:border-blue-600/40 hover:bg-blue-900/20 transition-all
     text-slate-300 hover:text-white
+  `.trim();
+
+  const arrowBtnClass = `
+    glass-card w-9 h-9 flex items-center justify-center rounded-lg
+    hover:border-blue-600/40 hover:bg-blue-900/20 transition-all
+    text-slate-300 hover:text-white active:scale-95
   `.trim();
 
   return (
@@ -81,6 +91,61 @@ export const MapControls: React.FC<Props> = ({ mapRef, is3D, onToggle3D }) => {
           />
         </svg>
       </button>
+
+      {/* ── D-Pad: directional pan ── */}
+      <div className="flex flex-col items-center gap-0.5" aria-label="Pan controls">
+        {/* Up */}
+        <button
+          onClick={() => pan(0, -150)}
+          className={arrowBtnClass}
+          aria-label="Pan up"
+          title="Pan up"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+            <path d="M7 2l5 7H2l5-7z" />
+          </svg>
+        </button>
+
+        {/* Left + Right row */}
+        <div className="flex gap-0.5">
+          <button
+            onClick={() => pan(-150, 0)}
+            className={arrowBtnClass}
+            aria-label="Pan left"
+            title="Pan left"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+              <path d="M2 7l7-5v10L2 7z" />
+            </svg>
+          </button>
+          {/* Centre dot */}
+          <div className="w-9 h-9 glass-card rounded-lg flex items-center justify-center">
+            <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
+          </div>
+          <button
+            onClick={() => pan(150, 0)}
+            className={arrowBtnClass}
+            aria-label="Pan right"
+            title="Pan right"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+              <path d="M12 7l-7 5V2l7 5z" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Down */}
+        <button
+          onClick={() => pan(0, 150)}
+          className={arrowBtnClass}
+          aria-label="Pan down"
+          title="Pan down"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+            <path d="M7 12L2 5h10l-5 7z" />
+          </svg>
+        </button>
+      </div>
 
       {/* Zoom in */}
       <button
