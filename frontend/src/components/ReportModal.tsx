@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Camera, X, MapPin, Upload, CheckCircle } from 'lucide-react';
 import axios from 'axios';
+import { API } from '../config/api';
 
 interface Props {
   isOpen: boolean;
@@ -25,7 +26,7 @@ export const ReportModal: React.FC<Props> = ({ isOpen, onClose }) => {
         lat: 25.578, lng: 91.893,
         hazard_type: hazardType, severity, notes, photo_url: null,
       };
-      const res = await axios.post('http://127.0.0.1:8000/api/v1/report-hazard', payload);
+      const res = await axios.post(API.reportHazard, payload);
       setTicketId(res.data.ticket_id);
       setSubmitted(true);
     } catch (_) {
