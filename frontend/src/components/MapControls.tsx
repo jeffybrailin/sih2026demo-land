@@ -36,7 +36,7 @@ export const MapControls: React.FC<Props> = ({ mapRef, is3D, onToggle3D }) => {
   const bearing = mapRef.current?.getBearing() ?? 0;
 
   const btnClass = `
-    glass-card w-10 h-10 flex items-center justify-center rounded-xl
+    glass-card w-9 h-9 flex items-center justify-center rounded-xl
     hover:border-blue-600/40 hover:bg-blue-900/20 transition-all
     text-slate-300 hover:text-white
   `.trim();
@@ -49,7 +49,7 @@ export const MapControls: React.FC<Props> = ({ mapRef, is3D, onToggle3D }) => {
 
   return (
     <div
-      className="absolute right-4 bottom-24 z-20 flex flex-col gap-2"
+      className="absolute right-1 bottom-2 z-20 flex flex-col gap-1.5"
       role="group"
       aria-label="Map navigation controls"
     >

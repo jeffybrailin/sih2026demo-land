@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useClock } from '../context/ClockContext';
-import { Shield, Wifi, Maximize2, Minimize2, Globe } from 'lucide-react';
+import { Wifi, Maximize2, Minimize2, Globe } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import i18n from '../i18n';
 
@@ -38,30 +38,7 @@ export const GovHeader: React.FC = () => {
       role="banner"
       aria-label="Government of India — NDMA Landslide Early Warning System"
     >
-      {/* ── Left: Emblem + Branding ── */}
-      <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
-        {/* National Emblem placeholder */}
-        <div
-          className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border border-blue-700/40"
-          style={{ background: 'radial-gradient(circle, #1c2e5c 0%, #0F172A 100%)' }}
-          aria-label="NDMA Emblem"
-        >
-          <Shield size={18} className="text-white" />
-        </div>
-        <div className="min-w-0 hidden sm:block">
-          <div className="text-[9px] font-semibold tracking-widest text-white uppercase leading-none">
-            NDMA
-          </div>
-          <div className="text-[13px] font-bold text-white leading-tight truncate mt-0.5">
-            AI Landslide Early Warning System
-          </div>
-        </div>
-        {/* Mobile: short title */}
-        <div className="block sm:hidden">
-          <div className="text-xs font-bold text-white leading-tight">LEWS</div>
-          <div className="text-[8px] text-white uppercase tracking-widest">NDMA · India</div>
-        </div>
-      </div>
+
 
       {/* ── Centre: System status badges ── */}
       <div className="flex-1 flex items-center justify-center gap-2 px-2 overflow-hidden">
