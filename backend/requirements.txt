@@ -2,4 +2,15 @@ fastapi
 uvicorn[standard]
 pydantic
 requests
+aiohttp
 numpy
+scikit-learn
+xgboost
+joblib
+pandas
+scipy
+shap
+geopandas
+shapely
+pyarrow
+python-multipart

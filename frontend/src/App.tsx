@@ -7,12 +7,13 @@ import { GovHeader } from './components/GovHeader';
 import { MobileBottomSheet } from './components/MobileBottomSheet';
 import { RightPanel } from './components/RightPanel';
 import { useStore } from './store/useStore';
-import { RefreshCw, Camera } from 'lucide-react';
+import { RefreshCw, Camera, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { HistoricalReplay } from './components/HistoricalReplay';
 import './i18n';
 
 function App() {
-  const { fetchLiveWeather, activeAlerts, inferenceResults, weatherStatus } = useStore();
+  const { fetchLiveWeather, activeAlerts, inferenceResults, weatherStatus, showHistoricalReplay, toggleHistoricalReplay } = useStore();
   const { t } = useTranslation();
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -50,9 +51,21 @@ function App() {
       <AlertBanner />
 
       {/* ── Body: content below 56px header ── */}
+      <div className="flex-none px-4 py-2 border-b border-slate-800/60 flex items-center justify-between" style={{ background: 'rgba(9,14,26,0.9)' }}>
+        <div className="flex gap-4 overflow-x-auto hide-scrollbar">
+          <div className="flex flex-col"><span className="text-[9px] text-red-500 uppercase">Critical Zones</span><span className="font-bold text-red-400 text-xs">{criticalCount}</span></div>
+          <div className="w-px bg-slate-800/60" />
+          <div className="flex flex-col"><span className="text-[9px] text-orange-500 uppercase">High Risk</span><span className="font-bold text-orange-400 text-xs">{warningCount}</span></div>
+          <div className="w-px bg-slate-800/60" />
+          <div className="flex flex-col"><span className="text-[9px] text-blue-500 uppercase">Active Warnings</span><span className="font-bold text-blue-400 text-xs">{activeAlerts.length}</span></div>
+          <div className="w-px bg-slate-800/60" />
+          <div className="flex flex-col"><span className="text-[9px] text-amber-500 uppercase">Roads At Risk</span><span className="font-bold text-amber-400 text-xs">{(criticalCount + warningCount)}</span></div>
+          <div className="w-px bg-slate-800/60" />
+          <div className="flex flex-col"><span className="text-[9px] text-emerald-500 uppercase">Field Reports</span><span className="font-bold text-emerald-400 text-xs">3</span></div>
+        </div>
+      </div>
       <div
         className="flex flex-1 overflow-hidden"
-        style={{ marginTop: 'var(--header-h)' }}
       >
         {/* LEFT: Telemetry sidebar — hidden on mobile, shown md+ */}
         <Sidebar />
@@ -70,7 +83,7 @@ function App() {
                 weatherStatus === 'error' ? 'border-red-900/50' : ''
               }`}>
                 <div className="text-[8px] text-slate-600 uppercase tracking-wider leading-none mb-0.5">
-                  Open-Meteo
+                  XGBoost
                 </div>
                 <div className={`text-[10px] font-bold ${
                   weatherStatus === 'success' ? 'text-green-400' :
@@ -78,7 +91,7 @@ function App() {
                 }`}>
                   {weatherStatus === 'fetching' ? 'Syncing…' :
                    weatherStatus === 'error'    ? 'Error'    :
-                   `${inferenceResults.length} Sectors`}
+                   `44 Sectors`}
                 </div>
               </div>
 
@@ -100,6 +113,13 @@ function App() {
 
           {/* ── Top-right controls (over map) ── */}
           <div className="absolute top-3 right-4 z-20 flex items-center gap-1.5">
+            <button
+              onClick={toggleHistoricalReplay}
+              className="glass-card rounded-lg px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium text-slate-300 hover:text-white hover:border-purple-600/40 transition-all"
+            >
+              <Clock size={12} className="text-purple-400" />
+              <span className="hidden sm:inline">Replay</span>
+            </button>
             <button
               onClick={doFetch}
               disabled={syncing}
@@ -128,10 +148,10 @@ function App() {
           <div className="absolute bottom-4 left-3 z-20 glass-card rounded-xl p-3 text-[10px]">
             <div className="section-label mb-2">{t('risk_legend')}</div>
             {[
-              { color: '#DC2626', label: 'Critical — FoS < 1.0' },
-              { color: '#EA580C', label: 'High — FoS 1.0–1.1'  },
-              { color: '#D97706', label: 'Watch — FoS 1.1–1.3'  },
-              { color: '#16A34A', label: 'Safe — FoS > 1.3'     },
+              { color: '#DC2626', label: 'Critical — ML Score > 0.75' },
+              { color: '#EA580C', label: 'High — ML Score 0.50–0.75'  },
+              { color: '#D97706', label: 'Watch — ML Score 0.25–0.50'  },
+              { color: '#16A34A', label: 'Safe — ML Score < 0.25'     },
             ].map(item => (
               <div key={item.label} className="flex items-center gap-2 mb-1">
                 <div
@@ -163,6 +183,9 @@ function App() {
 
       {/* ── Report modal ── */}
       <ReportModal isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} />
+      
+      {/* ── Historical Replay Modal ── */}
+      {showHistoricalReplay && <HistoricalReplay onClose={toggleHistoricalReplay} />}
     </div>
   );
 }

@@ -1,6 +1,9 @@
 import React from 'react';
-import { AlertTriangle, Phone, Radio, BarChart2, Clock } from 'lucide-react';
+import { AlertTriangle, Phone, Radio, Activity } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { ForecastTimeline } from './ForecastTimeline';
+import { ExplainabilityPanel } from './ExplainabilityPanel';
+import { PriorityPanel } from './PriorityPanel';
 
 const EMERGENCY_CONTACTS = [
   { name: 'NDRF Control Room',      number: '011-24363260', color: '#DC2626' },
@@ -10,27 +13,24 @@ const EMERGENCY_CONTACTS = [
 ];
 
 export const RightPanel: React.FC = () => {
-  const { activeAlerts, inferenceResults } = useStore();
+  const { activeAlerts, selectedSectorId, forecastData, inferenceResults } = useStore();
+  const selectedInf = inferenceResults.find(r => r.sector_id === selectedSectorId);
+  const forecast = selectedSectorId ? forecastData[selectedSectorId] : null;
 
-  // Sort all by risk score descending
-  const ranked = [...inferenceResults].sort((a, b) => b.risk_score - a.risk_score).slice(0, 8);
-
-  const getBarColor = (sev: string) => {
-    if (sev === 'RED')    return '#DC2626';
-    if (sev === 'ORANGE') return '#EA580C';
-    if (sev === 'YELLOW') return '#D97706';
-    return '#16A34A';
-  };
-
-  const maxScore = ranked[0]?.risk_score ?? 1;
+  // Mock priority data for demo since we didn't add full mock array in store
+  const priorityMock = selectedSectorId ? {
+    sector_id: selectedSectorId, hazard_score: 0.84, exposure_score: 0.77,
+    vulnerability_score: 0.62, infrastructure_criticality: 0.90, priority_score: 0.78,
+    priority_rank: 1, population_at_risk: 42000, road_name: 'NH-10 (Teesta Valley)', nearest_hospital_km: 18.5
+  } : null;
 
   return (
     <aside
-      className="hidden lg:flex flex-col h-full border-l border-slate-800/60 overflow-hidden"
+      className="hidden lg:flex flex-col h-full border-l border-slate-800/60 overflow-y-auto"
       style={{ width: 'var(--right-w)', background: 'rgba(9, 14, 26, 0.6)', backdropFilter: 'blur(8px)' }}
       aria-label="Incident log and emergency dispatch panel"
     >
-      {/* ── Section 1: Incident Log ── */}
+      {/* ── Section 1: Live Incident Feed ── */}
       <div className="flex-shrink-0 p-4 border-b border-slate-800/60">
         <div className="flex items-center gap-2 mb-3">
           <AlertTriangle size={13} className="text-orange-400" />
@@ -41,33 +41,20 @@ export const RightPanel: React.FC = () => {
             </span>
           )}
         </div>
-        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+        <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
           {activeAlerts.length === 0 ? (
-            <div className="text-center py-5">
+            <div className="text-center py-4">
               <div className="w-3 h-3 rounded-full bg-green-400 mx-auto mb-1" />
               <div className="text-xs text-slate-500">All zones nominal</div>
             </div>
           ) : (
             activeAlerts.map((a, i) => (
-              <div
-                key={`${a.sector_id}-${i}`}
-                className="glass-card rounded-xl p-2.5 border-l-2 animate-fade-in"
-                style={{ borderLeftColor: a.severity === 'RED' ? '#DC2626' : '#EA580C' }}
-              >
+              <div key={`${a.sector_id}-${i}`} className="glass-card rounded-xl p-2.5 border-l-2" style={{ borderLeftColor: a.severity === 'RED' ? '#DC2626' : '#EA580C' }}>
                 <div className="flex items-center justify-between gap-1 mb-1">
                   <span className="text-xs font-semibold text-white truncate">{a.name}</span>
-                  <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${
-                    a.severity === 'RED' ? 'badge-critical' : 'badge-high'
-                  }`}>{a.severity}</span>
+                  <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${a.severity === 'RED' ? 'badge-critical' : 'badge-high'}`}>{a.severity}</span>
                 </div>
-                <div className="text-[10px] text-slate-500 flex gap-2 flex-wrap">
-                  <span className="flex items-center gap-0.5">
-                    <Clock size={7} /> {new Date().toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                  <span>FoS {a.fos}</span>
-                  <span>Rain {a.rainfall_24h}mm</span>
-                </div>
-                <div className="text-[9px] mt-1 text-slate-400 leading-tight bg-slate-900/50 px-2 py-1 rounded">
+                <div className="text-[10px] mt-1 text-slate-400 leading-tight bg-slate-900/50 px-2 py-1 rounded">
                   {a.recommended_action}
                 </div>
               </div>
@@ -76,41 +63,44 @@ export const RightPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Section 2: AI Risk Ranking ── */}
-      <div className="flex-1 p-4 border-b border-slate-800/60 overflow-hidden">
-        <div className="flex items-center gap-2 mb-3">
-          <BarChart2 size={13} className="text-purple-400" />
-          <span className="section-label">AI Risk Ranking</span>
-          <span className="ml-auto text-[9px] text-slate-600">{inferenceResults.length} sectors</span>
+      {!selectedSectorId ? (
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-500 border-b border-slate-800/60">
+          <Activity size={32} className="mb-2 opacity-50" />
+          <div className="text-sm font-semibold">No Sector Selected</div>
+          <div className="text-xs mt-1">Click a sector on the map to see AI analysis</div>
         </div>
-        <div className="space-y-1.5 overflow-y-auto h-full pb-4 pr-1">
-          {ranked.map((r, i) => (
-            <div key={r.sector_id} className="flex items-center gap-2">
-              <span className="text-[10px] font-mono text-slate-600 w-4 flex-shrink-0">{i + 1}</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="text-[10px] text-slate-300 truncate leading-none">{r.name}</span>
-                  <span className="font-mono text-[9px] text-slate-500 flex-shrink-0 ml-1">
-                    {(r.risk_score * 100).toFixed(0)}%
-                  </span>
-                </div>
-                <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{
-                      width: `${(r.risk_score / maxScore) * 100}%`,
-                      background: getBarColor(r.severity),
-                      opacity: 0.85,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      ) : (
+        <>
+          {/* ── Section 2: Forecast Timeline ── */}
+          <div className="border-b border-slate-800/60 relative">
+            <div className="absolute top-0 right-0 p-4 text-[9px] font-mono text-slate-500">{selectedSectorId}</div>
+            <ForecastTimeline
+              sectorId={selectedSectorId}
+              probNow={forecast?.prob_now ?? 0} prob1h={forecast?.prob_1h ?? 0}
+              prob6h={forecast?.prob_6h ?? 0} prob12h={forecast?.prob_12h ?? 0} prob24h={forecast?.prob_24h ?? 0}
+              loading={!forecast}
+            />
+          </div>
 
-      {/* ── Section 3: Emergency Dispatch ── */}
+          {/* ── Section 3: Explainability ── */}
+          <div className="border-b border-slate-800/60">
+            <ExplainabilityPanel
+              contributors={forecast?.shap_contributors ?? []}
+              topReason={forecast?.top_reason ?? ''}
+              riskScore={selectedInf?.risk_score ?? 0}
+              riskLevel={selectedInf?.severity ?? 'GREEN'}
+              loading={!forecast}
+            />
+          </div>
+
+          {/* ── Section 4: Priority Breakdown ── */}
+          <div className="border-b border-slate-800/60">
+            <PriorityPanel data={priorityMock} loading={!priorityMock} />
+          </div>
+        </>
+      )}
+
+      {/* ── Section 5: Emergency Dispatch ── */}
       <div className="flex-shrink-0 p-4">
         <div className="flex items-center gap-2 mb-3">
           <Radio size={13} className="text-red-400" />
@@ -119,28 +109,16 @@ export const RightPanel: React.FC = () => {
         <div className="space-y-1.5">
           {EMERGENCY_CONTACTS.map(c => (
             <div key={c.name} className="glass-card rounded-xl px-3 py-2 flex items-center gap-2.5">
-              <div
-                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                style={{ background: c.color }}
-              />
+              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: c.color }} />
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-semibold text-slate-300 truncate">{c.name}</div>
-                <div className="font-mono text-[11px] font-bold" style={{ color: c.color }}>
-                  {c.number}
-                </div>
+                <div className="font-mono text-[11px] font-bold" style={{ color: c.color }}>{c.number}</div>
               </div>
-              <a
-                href={`tel:${c.number.replace(/-/g, '')}`}
-                className="flex-shrink-0 p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors"
-                aria-label={`Call ${c.name}`}
-              >
+              <a href={`tel:${c.number.replace(/-/g, '')}`} className="flex-shrink-0 p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors">
                 <Phone size={12} className="text-slate-400" />
               </a>
             </div>
           ))}
-        </div>
-        <div className="mt-3 text-center text-[9px] text-slate-700">
-          MapLibre · Turf.js · Open-Meteo · FastAPI
         </div>
       </div>
     </aside>

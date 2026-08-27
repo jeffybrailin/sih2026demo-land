@@ -46,6 +46,13 @@
     "rainfall": "Rainfall",
     "historical": "Historical Incidents",
     "action": "Recommended Action",
-    "lang_switch": "हिन्दी"
+    "lang_switch": "हिन्दी",
+    "model_info": "AI Model Info",
+    "forecast": "Forecast",
+    "explainability": "Why this risk?",
+    "priority": "Alert Priority",
+    "field_reports": "Field Reports",
+    "historical_replay": "Event Replay",
+    "provenance": "Data Source"
   }
 }

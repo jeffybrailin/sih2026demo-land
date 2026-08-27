@@ -9,6 +9,9 @@ export interface TooltipData {
   soilMoisture: number;
   severity: string;
   highway: string;
+  prob_now?: number;
+  prob_6h?: number;
+  priority_rank?: number;
 }
 
 interface Props {
@@ -41,7 +44,10 @@ export const MapTooltip: React.FC<Props> = ({ data }) => {
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-2.5">
-        <div className="text-sm font-bold text-white leading-tight">{data.name}</div>
+        <div>
+          <div className="text-sm font-bold text-white leading-tight">{data.name}</div>
+          {data.priority_rank && <div className="text-[9px] text-purple-400 mt-0.5">Priority #{data.priority_rank}</div>}
+        </div>
         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${sev.cls}`}>
           {sev.label}
         </span>
@@ -52,6 +58,15 @@ export const MapTooltip: React.FC<Props> = ({ data }) => {
 
       {/* Metrics */}
       <div className="space-y-1.5">
+        {(data.prob_now !== undefined && data.prob_6h !== undefined) && (
+          <div className="flex items-center justify-between gap-3 bg-slate-800/40 px-2 py-1 rounded">
+            <div className="text-[10px] text-slate-400">AI Forecast</div>
+            <div className="text-[11px] font-bold text-white flex items-center gap-1">
+              {Math.round(data.prob_now * 100)}%
+              {data.prob_6h > data.prob_now ? <span className="text-red-400">↑</span> : <span className="text-green-400">↓</span>}
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
             <CloudRain size={10} className="text-blue-400" />
@@ -81,7 +96,7 @@ export const MapTooltip: React.FC<Props> = ({ data }) => {
         </div>
       </div>
       <div className="mt-2 pt-2 border-t border-slate-800 text-[9px] text-slate-600 text-center">
-        Click polygon for full ML analysis
+        Click for forecast · SHAP · priority
       </div>
     </div>
   );

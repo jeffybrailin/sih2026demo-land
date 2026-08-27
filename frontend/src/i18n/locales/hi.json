@@ -46,6 +46,13 @@
     "rainfall": "वर्षा",
     "historical": "ऐतिहासिक घटनाएं",
     "action": "अनुशंसित कार्रवाई",
-    "lang_switch": "English"
+    "lang_switch": "English",
+    "model_info": "AI मॉडल जानकारी",
+    "forecast": "पूर्वानुमान",
+    "explainability": "यह जोखिम क्यों?",
+    "priority": "अलर्ट प्राथमिकता",
+    "field_reports": "फ़ील्ड रिपोर्ट",
+    "historical_replay": "घटना पुनः प्ले",
+    "provenance": "डेटा स्रोत"
   }
 }

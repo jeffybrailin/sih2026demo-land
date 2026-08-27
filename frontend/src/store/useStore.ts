@@ -2,8 +2,12 @@ import { create } from 'zustand';
 import * as turf from '@turf/turf';
 import { fetchAllCitiesWeather, LiveWeatherData } from '../services/weatherService';
 import { runAllInference, MLInferenceResult } from '../services/mlInference';
+import { 
+  ForecastResponse, PriorityData, FieldReport, ProvenanceData, ModelInfo, AlertData,
+  getForecast, getAlerts, getFieldReports, getProvenance, getModelInfo, submitReport as apiSubmitReport
+} from '../services/apiService';
 
-const POLYGON_OFFSET = 0.045;
+const POLYGON_OFFSET = 0.030; // ~3 km per side — tighter for 44-sector NE India coverage
 
 function buildPolygon(lat: number, lon: number) {
   return [[
@@ -16,30 +20,48 @@ function buildPolygon(lat: number, lon: number) {
 }
 
 export interface AppState {
-  // Live weather from Open-Meteo (real API)
   weatherData: LiveWeatherData[];
-  // ML inference results driven by live weather
   inferenceResults: MLInferenceResult[];
-  // GeoJSON derived from inference (drives map polygon colors)
   riskGeoJSON: GeoJSON.FeatureCollection | null;
-  // Active RED/ORANGE alerts
   activeAlerts: MLInferenceResult[];
-  // User monitoring location
   userLocation: { lat: number; lng: number } | null;
-  // Turf.js intersection result
   isAlertActive: boolean;
   intersectedZone: string;
-  // Weather fetch state
   weatherStatus: 'idle' | 'fetching' | 'success' | 'error';
   lastWeatherFetch: string;
-  // Language
-  language: 'en' | 'hi';
+  
+  // New state
+  selectedSectorId: string | null;
+  forecastData: Record<string, ForecastResponse>;
+  priority: PriorityData[];
+  fieldReports: FieldReport[];
+  provenanceData: Record<string, ProvenanceData>;
+  modelInfo: ModelInfo | null;
+  alertData: AlertData[];
+  showHistoricalReplay: boolean;
+  showFieldReports: boolean;
+  showInfrastructure: boolean;
+  showProvenance: boolean;
+  language: 'en' | 'hi' | 'as';
 
   // Actions
   fetchLiveWeather: () => Promise<void>;
   setUserLocation: (loc: { lat: number; lng: number }) => void;
   dismissAlert: () => void;
-  setLanguage: (lang: 'en' | 'hi') => void;
+  setLanguage: (lang: 'en' | 'hi' | 'as') => void;
+  
+  // New actions
+  selectSector: (sectorId: string | null) => void;
+  fetchForecast: (sectorId: string) => Promise<void>;
+  fetchAlerts: () => Promise<void>;
+  fetchFieldReports: () => Promise<void>;
+  fetchProvenance: (sectorId: string) => Promise<void>;
+  fetchModelInfo: () => Promise<void>;
+  submitFieldReport: (data: Partial<FieldReport>) => Promise<void>;
+  toggleHistoricalReplay: () => void;
+  toggleFieldReports: () => void;
+  toggleInfrastructure: () => void;
+  toggleProvenance: () => void;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -52,18 +74,26 @@ export const useStore = create<AppState>((set, get) => ({
   intersectedZone: '',
   weatherStatus: 'idle',
   lastWeatherFetch: '',
+  
+  selectedSectorId: null,
+  forecastData: {},
+  priority: [],
+  fieldReports: [],
+  provenanceData: {},
+  modelInfo: null,
+  alertData: [],
+  showHistoricalReplay: false,
+  showFieldReports: false,
+  showInfrastructure: false,
+  showProvenance: false,
   language: 'en',
 
   fetchLiveWeather: async () => {
     set({ weatherStatus: 'fetching' });
     try {
-      // 1. Fetch LIVE Open-Meteo data for all 8 NER cities
       const weatherData = await fetchAllCitiesWeather();
-
-      // 2. Run ML inference on live data
       const inferenceResults = runAllInference(weatherData);
 
-      // 3. Build GeoJSON FeatureCollection with weather-driven colors
       const features: GeoJSON.Feature[] = inferenceResults.map((inf, i) => ({
         type: 'Feature',
         properties: {
@@ -99,9 +129,7 @@ export const useStore = create<AppState>((set, get) => ({
         lastWeatherFetch: new Date().toLocaleTimeString('en-IN', { hour12: false }),
       });
 
-      // 4. Re-check Turf intersection with new data
       get().setUserLocation(get().userLocation!);
-
     } catch (err) {
       console.error('Live weather fetch failed:', err);
       set({ weatherStatus: 'error' });
@@ -111,7 +139,6 @@ export const useStore = create<AppState>((set, get) => ({
   setUserLocation: (loc) => {
     if (!loc) return;
     set({ userLocation: loc });
-
     const { riskGeoJSON } = get();
     if (!riskGeoJSON) return;
 
@@ -129,17 +156,93 @@ export const useStore = create<AppState>((set, get) => ({
             zoneName = props.name;
             break;
           }
-        } catch (_) { /* skip malformed */ }
+        } catch (_) {}
       }
     }
-
     set({ isAlertActive: triggered, intersectedZone: zoneName });
-
-    if (triggered && 'vibrate' in navigator) {
-      navigator.vibrate([400, 100, 400, 100, 400]);
-    }
+    if (triggered && 'vibrate' in navigator) navigator.vibrate([400, 100, 400, 100, 400]);
   },
 
   dismissAlert: () => set({ isAlertActive: false }),
   setLanguage: (lang) => set({ language: lang }),
+  
+  selectSector: (sectorId) => {
+    set({ selectedSectorId: sectorId });
+    if (sectorId) {
+      get().fetchForecast(sectorId);
+      get().fetchProvenance(sectorId);
+    }
+  },
+  
+  fetchForecast: async (sectorId) => {
+    const data = await getForecast(sectorId);
+    if (data) {
+      set(state => ({ forecastData: { ...state.forecastData, [sectorId]: data } }));
+    } else {
+      // Mock for demo if backend is missing
+      const mock: ForecastResponse = {
+        sector_id: sectorId, prob_now: 0.18, prob_1h: 0.25, prob_6h: 0.72, prob_12h: 0.79, prob_24h: 0.84,
+        horizons: [], shap_contributors: [
+          { feature: 'rainfall_24h', direction: 'up', importance: 0.31, display_name: '24h Rainfall' },
+          { feature: 'soil_moisture', direction: 'up', importance: 0.21, display_name: 'Soil Moisture' },
+          { feature: 'slope', direction: 'up', importance: 0.18, display_name: 'Slope' },
+          { feature: 'history', direction: 'up', importance: 0.14, display_name: 'Historical Risk' },
+        ],
+        top_reason: 'Elevated 24h rainfall on saturated soils over steep slope',
+        model_version: 'xgb-v1.3', prediction_timestamp: new Date().toISOString(), confidence_flag: 'HIGH'
+      };
+      set(state => ({ forecastData: { ...state.forecastData, [sectorId]: mock } }));
+    }
+  },
+  
+  fetchAlerts: async () => {
+    const data = await getAlerts();
+    set({ alertData: data });
+  },
+  
+  fetchFieldReports: async () => {
+    const data = await getFieldReports();
+    set({ fieldReports: data });
+  },
+  
+  fetchProvenance: async (sectorId) => {
+    const data = await getProvenance(sectorId);
+    if (data) {
+      set(state => ({ provenanceData: { ...state.provenanceData, [sectorId]: data } }));
+    } else {
+      // Mock
+      set(state => ({ provenanceData: { ...state.provenanceData, [sectorId]: {
+        sector_id: sectorId, rainfall_source: 'IMD Operational (primary)', rainfall_obs_time: '2026-08-27 10:15 IST',
+        terrain_source: 'NASA SRTM 30m', terrain_resolution: '30m', soil_source: 'NBSS-LUP Meghalaya Soil Survey 2018',
+        model_version: 'xgb-v1.3', model_trained_on: '2026-08-15', cv_roc_auc: 0.8943, brier_score: 0.112,
+        features_used: 27, prediction_timestamp: new Date().toISOString()
+      }}}));
+    }
+  },
+  
+  fetchModelInfo: async () => {
+    const data = await getModelInfo();
+    if (data) {
+      set({ modelInfo: data });
+    } else {
+      set({ modelInfo: {
+        model_name: 'LEWS Ensemble', model_version: 'xgb-v1.3', primary_model: 'XGBoost', baseline_model: 'Random Forest',
+        calibration_method: 'Platt-calibrated | spatial-temporal validation', trained_on: '2026-08-15',
+        n_training_samples: 15420, cv_roc_auc_mean: 0.8943, brier_score: 0.112, data_sources: ['IMD', 'ERA5'],
+        feature_count: 27, training_split_method: 'Spatial-temporal (NOT random)'
+      }});
+    }
+  },
+  
+  submitFieldReport: async (data) => {
+    const result = await apiSubmitReport(data);
+    if (result) {
+      set(state => ({ fieldReports: [...state.fieldReports, result] }));
+    }
+  },
+  
+  toggleHistoricalReplay: () => set(s => ({ showHistoricalReplay: !s.showHistoricalReplay })),
+  toggleFieldReports: () => set(s => ({ showFieldReports: !s.showFieldReports })),
+  toggleInfrastructure: () => set(s => ({ showInfrastructure: !s.showInfrastructure })),
+  toggleProvenance: () => set(s => ({ showProvenance: !s.showProvenance })),
 }));

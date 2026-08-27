@@ -25,3 +25,12 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# ML trained model artifacts (large binary files — regenerate with train.py)
+backend/ml/trained/
+backend/ml/cache/
+backend/ml/training_data_real.csv
+
+# Satellite / terrain tile cache
+backend/data/cache/
+

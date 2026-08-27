@@ -36,7 +36,7 @@ export const GovHeader: React.FC = () => {
       className="fixed top-0 left-0 right-0 z-40 flex items-center h-14 px-3 md:px-5 border-b border-navy-700"
       style={{ background: 'var(--color-navy-900)', borderBottomColor: '#1E3A8A' }}
       role="banner"
-      aria-label="Government of India — NDMA Landslide Early Warning System"
+      aria-label="Government of India — NDMA Landslide Early Warning System · NE India (44 Sectors)"
     >
 
 
