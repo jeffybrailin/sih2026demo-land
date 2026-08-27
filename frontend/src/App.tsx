@@ -7,7 +7,7 @@ import { GovHeader } from './components/GovHeader';
 import { MobileBottomSheet } from './components/MobileBottomSheet';
 import { RightPanel } from './components/RightPanel';
 import { useStore } from './store/useStore';
-import { RefreshCw, Shield, Camera } from 'lucide-react';
+import { RefreshCw, Camera } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import './i18n';
 
@@ -122,17 +122,10 @@ function App() {
             </button>
           </div>
 
-          {/* ── Bottom-left: data source note ── */}
-          <div className="absolute bottom-20 left-3 z-20 hidden lg:block">
-            <div className="glass-card rounded-lg px-3 py-2 text-[9px] text-slate-600 max-w-[220px]">
-              <Shield size={8} className="inline mr-1 text-blue-500" />
-              Colors driven by <strong className="text-slate-400">live Open-Meteo rainfall + ML inference</strong>.
-              Click polygon for full analysis.
-            </div>
-          </div>
 
-          {/* ── Bottom-right: Risk legend ── */}
-          <div className="absolute bottom-20 right-16 z-20 glass-card rounded-xl p-3 text-[10px]">
+
+          {/* ── Bottom-left: Risk legend ── */}
+          <div className="absolute bottom-4 left-3 z-20 glass-card rounded-xl p-3 text-[10px]">
             <div className="section-label mb-2">{t('risk_legend')}</div>
             {[
               { color: '#DC2626', label: 'Critical — FoS < 1.0' },
