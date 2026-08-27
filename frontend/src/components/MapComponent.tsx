@@ -52,6 +52,7 @@ export const MapComponent: React.FC = () => {
       pitch: 60,
       bearing: -10,
       maxPitch: 70,
+      attributionControl: false,
     });
 
     const m = map.current;
