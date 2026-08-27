@@ -2,46 +2,192 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Design Tokens ─────────────────────────────────────── */
+:root {
+  --color-navy-950: #080e1a;
+  --color-navy-900: #0F172A;
+  --color-navy-800: #112258;
+  --color-navy-700: #172e70;
+  --color-navy-600: #1E3A8A;
+  --color-slate:    #334155;
+  --color-muted:    #F8FAFC;
+  --color-safe:     #16A34A;
+  --color-watch:    #D97706;
+  --color-high:     #EA580C;
+  --color-critical: #DC2626;
+  --header-h: 56px;
+  --sidebar-w: 300px;
+  --right-w: 310px;
+  --font-sans: 'Inter', 'Public Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ── Base Reset ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
 html, body, #root {
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
-  background: #0f1117;
+  background: var(--color-navy-900);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* MapLibre overrides */
+body { overflow: hidden; }
+
+/* ── Glassmorphism Utility ──────────────────────────────── */
+.glass-card {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.glass-card-light {
+  background: rgba(30, 58, 138, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(99, 140, 255, 0.15);
+}
+
+/* ── Focus Rings (WCAG 2.1 AA) ─────────────────────────── */
+:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* ── Section Label ──────────────────────────────────────── */
+.section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+/* ── MapLibre Overrides ─────────────────────────────────── */
 .maplibregl-popup-content {
-  background-color: #111827 !important;
-  color: #f9fafb !important;
-  border-radius: 10px !important;
-  border: 1px solid #374151 !important;
-  padding: 12px !important;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.7) !important;
-  max-width: 260px !important;
+  background: rgba(9, 14, 26, 0.92) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: #f1f5f9 !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  padding: 14px 16px !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+  max-width: 300px !important;
+  font-family: var(--font-sans) !important;
 }
 .maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
-  border-top-color: #111827 !important;
+  border-top-color: rgba(9, 14, 26, 0.92) !important;
+}
+.maplibregl-popup-anchor-top .maplibregl-popup-tip {
+  border-bottom-color: rgba(9, 14, 26, 0.92) !important;
 }
 .maplibregl-popup-close-button {
-  color: #9ca3af !important;
-  font-size: 18px !important;
+  color: #64748b !important;
+  font-size: 20px !important;
+  right: 8px !important;
+  top: 6px !important;
+  line-height: 1 !important;
+}
+.maplibregl-popup-close-button:hover {
+  color: #f1f5f9 !important;
+  background: rgba(255,255,255,0.08) !important;
+  border-radius: 4px !important;
+}
+/* Hide default nav control — we use custom MapControls */
+.maplibregl-ctrl-group {
+  display: none !important;
+}
+.maplibregl-ctrl-scale {
+  display: none !important;
 }
 
-/* Pulsating alert animation */
+/* ── Alert Banner Animation ─────────────────────────────── */
 @keyframes pulse-red {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.7); }
-  50% { box-shadow: 0 0 0 12px rgba(239,68,68,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6); }
+  50%       { box-shadow: 0 0 0 14px rgba(220, 38, 38, 0); }
 }
 .pulse-alert {
   animation: pulse-red 1.4s ease-in-out infinite;
 }
 
-@keyframes slide-down {
+@keyframes slide-down-anim {
   from { transform: translateY(-100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(0); opacity: 1; }
 }
 .slide-down {
-  animation: slide-down 0.35s ease-out forwards;
+  animation: slide-down-anim 0.35s ease-out forwards;
+}
+
+/* ── Tooltip fade ───────────────────────────────────────── */
+@keyframes tooltip-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.tooltip-animate {
+  animation: tooltip-in 0.18s ease-out forwards;
+}
+
+/* ── Metric card shimmer on load ────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400% 0; }
+  100% { background-position: 400% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 400% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+/* ── Bottom sheet drag handle ───────────────────────────── */
+.drag-handle {
+  width: 40px;
+  height: 4px;
+  background: #475569;
+  border-radius: 2px;
+  margin: 0 auto 12px;
+}
+
+/* ── Risk severity badge colours ────────────────────────── */
+.badge-safe     { background: rgba(22,163,74,0.15);  color: #4ade80; border: 1px solid rgba(22,163,74,0.3);  }
+.badge-watch    { background: rgba(217,119,6,0.15);  color: #fbbf24; border: 1px solid rgba(217,119,6,0.3);  }
+.badge-high     { background: rgba(234,88,12,0.15);  color: #fb923c; border: 1px solid rgba(234,88,12,0.3);  }
+.badge-critical { background: rgba(220,38,38,0.15);  color: #f87171; border: 1px solid rgba(220,38,38,0.3);  }
+
+/* ── Map Tooltip card ───────────────────────────────────── */
+.map-tooltip {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  min-width: 220px;
+  max-width: 280px;
+}
+
+/* ── Mobile bottom sheet ────────────────────────────────── */
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.bottom-sheet.collapsed {
+  transform: translateY(calc(100% - 120px));
+}
+.bottom-sheet.expanded {
+  transform: translateY(0);
 }
