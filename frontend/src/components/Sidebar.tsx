@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore';
 import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle, MapPin, Activity, Zap, RefreshCw,
-  CloudRain, Droplets, Brain, BarChart2, Satellite,
+  CloudRain, Droplets, BarChart2, Satellite,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -121,13 +121,6 @@ export const Sidebar: React.FC = () => {
 
         {/* ── Section: ML Inference ── */}
         <div className="p-4 border-b border-slate-800/60">
-          <div className="flex items-center gap-2 mb-3">
-            <Brain size={13} className="text-purple-400" />
-            <span className="section-label">ML Engine — XGBoost (primary) + RF (baseline)</span>
-            <span className="ml-auto text-[9px] bg-purple-950/40 text-purple-400 border border-purple-900/40 px-2 py-0.5 rounded-full font-semibold truncate max-w-[80px]" title="Platt-calibrated | spatial-temporal validation">
-              Platt-calibrated | spatial-temporal validation
-            </span>
-          </div>
           <div className="text-[10px] text-slate-500 mb-2 truncate">IMD · ERA5 · GSI Atlas · NBSS-LUP · NRSC LULC</div>
           <div className="grid grid-cols-3 gap-2">
             <div className="glass-card rounded-xl p-3 text-center border-t-2" style={{ borderTopColor: '#DC2626' }}>
