@@ -97,6 +97,22 @@ const HISTORICAL_EVENTS: GeoJSON.FeatureCollection = {
  */
 const BASEMAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 
+// Outer perimeter of the North East India monitoring region.
+const NORTHEAST_PERIMETER: GeoJSON.Feature<GeoJSON.Polygon> = {
+  type: 'Feature',
+  geometry: {
+    type: 'Polygon',
+    coordinates: [[
+      [87.90, 26.60], [88.10, 28.10], [89.10, 28.25], [91.00, 28.20], [93.00, 28.50],
+      [95.10, 29.45], [97.00, 29.50], [97.70, 28.00], [97.65, 26.10],
+      [97.30, 24.60], [96.20, 23.00], [95.00, 22.00], [93.70, 21.65],
+      [92.30, 21.70], [90.90, 22.20], [90.00, 23.20], [89.20, 24.80],
+      [87.90, 26.60],
+    ]],
+  },
+  properties: {},
+};
+
 export const MapComponent: React.FC = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -138,13 +154,16 @@ export const MapComponent: React.FC = () => {
         }
         if (layer.type === 'line') {
           const lid = layer.id.toLowerCase();
+          const sourceLayer = String((layer as maplibregl.Layer)['source-layer'] ?? '').toLowerCase();
           const isRoad = lid.includes('road') || lid.includes('motorway') ||
                          lid.includes('highway') || lid.includes('trunk') ||
                          lid.includes('primary') || lid.includes('secondary') ||
-                         lid.includes('street') || lid.includes('tunnel');
+                         lid.includes('street') || lid.includes('tunnel') ||
+                         sourceLayer.includes('road') || sourceLayer.includes('transport');
           if (isRoad) {
-            // Make road lines fully opaque and 1.6× wider than default
+            // Keep transport lines readable over both terrain and flat basemap.
             try { m.setPaintProperty(layer.id, 'line-opacity', 1.0); } catch (_) {}
+            try { m.setPaintProperty(layer.id, 'line-color', '#d8dee8'); } catch (_) {}
             try {
               const w = m.getPaintProperty(layer.id, 'line-width');
               if (typeof w === 'number' && w > 0) {
@@ -175,6 +194,29 @@ export const MapComponent: React.FC = () => {
           'hillshade-highlight-color': '#ffffff',
           'hillshade-shadow-color': '#000000',
           'hillshade-illumination-anchor': 'viewport',
+        },
+      });
+
+      // Persistent regional boundary, deliberately above terrain shading.
+      m.addSource('northeast-perimeter', { type: 'geojson', data: NORTHEAST_PERIMETER });
+      m.addLayer({
+        id: 'northeast-perimeter-casing',
+        type: 'line',
+        source: 'northeast-perimeter',
+        paint: {
+          'line-color': '#160707',
+          'line-width': 7,
+          'line-opacity': 0.95,
+        },
+      });
+      m.addLayer({
+        id: 'northeast-perimeter',
+        type: 'line',
+        source: 'northeast-perimeter',
+        paint: {
+          'line-color': '#ef3340',
+          'line-width': 3.5,
+          'line-opacity': 1,
         },
       });
 
@@ -382,8 +424,17 @@ export const MapComponent: React.FC = () => {
   }, [riskGeoJSON]);
 
   const handle3DToggle = useCallback(() => {
-    setIs3D(prev => !prev);
-  }, []);
+    const nextIs3D = !is3D;
+    const m = map.current;
+    if (m) {
+      if (nextIs3D) {
+        m.setTerrain({ source: 'terrain-dem', exaggeration: 1.3 });
+      } else {
+        m.setTerrain(null);
+      }
+    }
+    setIs3D(nextIs3D);
+  }, [is3D]);
 
   return (
     <>
