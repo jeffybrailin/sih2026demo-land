@@ -91,27 +91,10 @@ const HISTORICAL_EVENTS: GeoJSON.FeatureCollection = {
 };
 
 /**
- * CartoDB Dark Matter GL — free, no API key.
- * Roads render as bright white/grey lines on a dark background,
- * giving excellent contrast in both 2-D and 3-D terrain mode.
+ * CartoDB Positron GL — free, no API key.
+ * The light basemap keeps terrain, roads, labels, and risk overlays readable.
  */
-const BASEMAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
-
-// Outer perimeter of the North East India monitoring region.
-const NORTHEAST_PERIMETER: GeoJSON.Feature<GeoJSON.Polygon> = {
-  type: 'Feature',
-  geometry: {
-    type: 'Polygon',
-    coordinates: [[
-      [87.90, 26.60], [88.10, 28.10], [89.10, 28.25], [91.00, 28.20], [93.00, 28.50],
-      [95.10, 29.45], [97.00, 29.50], [97.70, 28.00], [97.65, 26.10],
-      [97.30, 24.60], [96.20, 23.00], [95.00, 22.00], [93.70, 21.65],
-      [92.30, 21.70], [90.90, 22.20], [90.00, 23.20], [89.20, 24.80],
-      [87.90, 26.60],
-    ]],
-  },
-  properties: {},
-};
+const BASEMAP_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
 
 export const MapComponent: React.FC = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -147,10 +130,11 @@ export const MapComponent: React.FC = () => {
       const allLayers = m.getStyle().layers ?? [];
       allLayers.forEach(layer => {
         if (layer.type === 'symbol') {
-          // English labels with a dark halo so they're readable over terrain
+          // English labels with a light halo so they're readable over terrain.
           try { m.setLayoutProperty(layer.id, 'text-field', ['coalesce', ['get', 'name:en'], ['get', 'name']]); } catch (_) {}
-          try { m.setPaintProperty(layer.id, 'text-halo-color', '#000000'); } catch (_) {}
-          try { m.setPaintProperty(layer.id, 'text-halo-width', 1.5); } catch (_) {}
+          try { m.setPaintProperty(layer.id, 'text-color', '#172033'); } catch (_) {}
+          try { m.setPaintProperty(layer.id, 'text-halo-color', '#ffffff'); } catch (_) {}
+          try { m.setPaintProperty(layer.id, 'text-halo-width', 2); } catch (_) {}
         }
         if (layer.type === 'line') {
           const lid = layer.id.toLowerCase();
@@ -161,13 +145,13 @@ export const MapComponent: React.FC = () => {
                          lid.includes('street') || lid.includes('tunnel') ||
                          sourceLayer.includes('road') || sourceLayer.includes('transport');
           if (isRoad) {
-            // Keep transport lines readable over both terrain and flat basemap.
+            // Keep road lines dark and readable over terrain and the basemap.
             try { m.setPaintProperty(layer.id, 'line-opacity', 1.0); } catch (_) {}
-            try { m.setPaintProperty(layer.id, 'line-color', '#d8dee8'); } catch (_) {}
+            try { m.setPaintProperty(layer.id, 'line-color', '#334155'); } catch (_) {}
             try {
               const w = m.getPaintProperty(layer.id, 'line-width');
               if (typeof w === 'number' && w > 0) {
-                m.setPaintProperty(layer.id, 'line-width', Math.max(w * 1.6, 1.2));
+                m.setPaintProperty(layer.id, 'line-width', Math.max(w * 1.8, 1.4));
               }
             } catch (_) {}
           }
@@ -182,7 +166,7 @@ export const MapComponent: React.FC = () => {
         maxzoom: 15,
         encoding: 'terrarium',
       });
-      m.setTerrain({ source: 'terrain-dem', exaggeration: 1.3 });
+      m.setTerrain({ source: 'terrain-dem', exaggeration: 1.1 });
 
       // ── 3. Hillshade for terrain depth ───────────────────────────────
       m.addLayer({
@@ -190,33 +174,10 @@ export const MapComponent: React.FC = () => {
         type: 'hillshade',
         source: 'terrain-dem',
         paint: {
-          'hillshade-exaggeration': 0.45,
+          'hillshade-exaggeration': 0.22,
           'hillshade-highlight-color': '#ffffff',
-          'hillshade-shadow-color': '#000000',
+          'hillshade-shadow-color': '#94a3b8',
           'hillshade-illumination-anchor': 'viewport',
-        },
-      });
-
-      // Persistent regional boundary, deliberately above terrain shading.
-      m.addSource('northeast-perimeter', { type: 'geojson', data: NORTHEAST_PERIMETER });
-      m.addLayer({
-        id: 'northeast-perimeter-casing',
-        type: 'line',
-        source: 'northeast-perimeter',
-        paint: {
-          'line-color': '#160707',
-          'line-width': 7,
-          'line-opacity': 0.95,
-        },
-      });
-      m.addLayer({
-        id: 'northeast-perimeter',
-        type: 'line',
-        source: 'northeast-perimeter',
-        paint: {
-          'line-color': '#ef3340',
-          'line-width': 3.5,
-          'line-opacity': 1,
         },
       });
 
@@ -424,17 +385,8 @@ export const MapComponent: React.FC = () => {
   }, [riskGeoJSON]);
 
   const handle3DToggle = useCallback(() => {
-    const nextIs3D = !is3D;
-    const m = map.current;
-    if (m) {
-      if (nextIs3D) {
-        m.setTerrain({ source: 'terrain-dem', exaggeration: 1.3 });
-      } else {
-        m.setTerrain(null);
-      }
-    }
-    setIs3D(nextIs3D);
-  }, [is3D]);
+    setIs3D(prev => !prev);
+  }, []);
 
   return (
     <>
